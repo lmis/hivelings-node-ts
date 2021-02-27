@@ -1,0 +1,23 @@
+{
+  "name": "node-http-server",
+  "version": "1.0.0",
+  "description": "Node.js example server starter project",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.4",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "@types/cors": "2.8.8",
+    "@types/socket.io": "2.1.11",
+    "@types/express": "^4.17.2",
+    "cors": "2.8.5",
+    "express": "^4.17.1",
+    "socket.io": "3.0.1"
+  }
+}
