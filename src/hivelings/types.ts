@@ -41,7 +41,7 @@ export interface Output {
   memory64: string;
 }
 
-export type HivelingMind = (input: Input) => Promise<Output>;
+export type HivelingMind = (input: Input) => Output;
 
 export interface EntityBase {
   position: Position;

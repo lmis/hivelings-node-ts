@@ -45,9 +45,9 @@ io.on(Signal._CONNECTION, (socket: Socket) => {
 
   socket.on(Signal._DISCONNECT, () => {});
 
-  socket.on(Signal.HIVELING_MIND, ({ input, id }) => {
-    const output = hivelingMind(input);
+  socket.on(Signal.HIVELING_MIND, (inputs) => {
+    const outputs = inputs.map(hivelingMind);
 
-    socket.emit(Signal.HIVELING_MIND, { output, id });
+    socket.emit(Signal.HIVELING_MIND, outputs);
   });
 });
