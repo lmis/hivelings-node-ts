@@ -9,26 +9,7 @@ import {
   Entity,
   Position
 } from "./types";
-
-type Rng = {};
-// TODO: Implement this properly
-const makeStdLaggedFibo = (x: string): Rng => ({});
-const pickRandom = <T>(rng: Rng, xs: T[]) =>
-  xs[Math.round(Math.random() * xs.length)];
-
-export const sortBy = <T>(value: (x: T) => number, xs: T[]): T[] =>
-  xs
-    .map((x) => [x, value(x)] as [T, number])
-    .sort((a, b) => a[1] - b[1])
-    .map(([x]) => x);
-
-export const takeWhile = <T>(pred: (x: T) => boolean, xs: T[]): T[] => {
-  const i = xs.findIndex((x) => !pred(x));
-  if (i === -1) {
-    return xs;
-  }
-  return xs.slice(0, i);
-};
+import { Rng, makeStdLaggedFibo, pickRandom, takeWhile, sortBy } from "./utils";
 
 const { MOVE, TURN, PICKUP, DROP, WAIT } = DecisionType;
 const { HIVELING, HIVE_ENTRANCE, NUTRITION, OBSTACLE } = EntityType;
