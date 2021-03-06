@@ -4,7 +4,7 @@ import { hivelingMind } from "./hivelings/mind";
 
 const gameUrl = "https://vc4g6.csb.app/";
 // Hardcoded because I can't figure out the codesandbox magic
-const wssUrl = "wss://rgq3o.sse.codesandbox.io/";
+const wssUrl = "wss://neces.sse.codesandbox.io/";
 const redirectUrl = gameUrl + "?hive-mind=" + encodeURIComponent(wssUrl);
 const port = 8000;
 

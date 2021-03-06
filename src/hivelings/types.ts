@@ -1,11 +1,5 @@
 export type Position = [number, number];
-
-export enum Rotation {
-  NONE = "NONE",
-  CLOCKWISE = "CLOCKWISE",
-  BACK = "BACK",
-  COUNTERCLOCKWISE = "COUNTERCLOCKWISE"
-}
+export type Box = { left: number; right: number; top: number; bottom: number };
 
 export enum EntityType {
   HIVELING = "HIVELING",
@@ -24,7 +18,7 @@ export enum DecisionType {
 }
 
 export type Decision =
-  | { type: DecisionType.TURN; rotation: Rotation }
+  | { type: DecisionType.TURN; degrees: number }
   | { type: DecisionType.DROP }
   | { type: DecisionType.MOVE }
   | { type: DecisionType.PICKUP }
@@ -62,7 +56,7 @@ export type CurrentHiveling = EntityBase & CurrentHivelingDetails;
 export interface TrailDetails {
   type: EntityType.TRAIL;
   lifetime: number;
-  orientation: Rotation;
+  orientation: number;
 }
 export type Trail = EntityBase & TrailDetails;
 
