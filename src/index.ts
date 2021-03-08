@@ -2,7 +2,7 @@ import express from "express";
 import WebSocket from "ws";
 import { hivelingMind } from "./hivelings/mind";
 
-const gameUrl = "https://vc4g6.csb.app/";
+const gameUrl = "https://qlu1v.csb.app/";
 // Hardcoded because I can't figure out the codesandbox magic
 const wssUrl = "wss://neces.sse.codesandbox.io/";
 const redirectUrl = gameUrl + "?hive-mind=" + encodeURIComponent(wssUrl);
@@ -22,8 +22,8 @@ const wss = new WebSocket.Server({ server });
 wss.on("connection", (ws) => {
   console.log("connection");
   ws.on("message", (message) => {
-    const inputs = JSON.parse(message.toString());
-    const outputs = inputs.map(hivelingMind);
-    ws.send(JSON.stringify(outputs));
+    const input = JSON.parse(message.toString());
+    const output = hivelingMind(input);
+    ws.send(JSON.stringify(output));
   });
 });

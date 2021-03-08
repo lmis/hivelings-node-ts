@@ -1,9 +1,7 @@
 export type Position = [number, number];
-export type Box = { left: number; right: number; top: number; bottom: number };
-
 export enum EntityType {
   HIVELING = "HIVELING",
-  NUTRITION = "NUTRITION",
+  FOOD = "FOOD",
   OBSTACLE = "OBSTACLE",
   TRAIL = "TRAIL",
   HIVE_ENTRANCE = "HIVE_ENTRANCE"
@@ -20,22 +18,14 @@ export enum DecisionType {
 export type Decision =
   | { type: DecisionType.TURN; degrees: number }
   | { type: DecisionType.DROP }
-  | { type: DecisionType.MOVE }
+  | { type: DecisionType.MOVE; distance: number }
   | { type: DecisionType.PICKUP }
   | { type: DecisionType.WAIT };
-
-export interface Input {
-  visibleEntities: Entity[];
-  currentHiveling: CurrentHiveling;
-  randomSeed: string;
-}
 
 export interface Output {
   decision: Decision;
   memory64: string;
 }
-
-export type HivelingMind = (input: Input) => Output;
 
 export interface EntityBase {
   position: Position;
@@ -44,7 +34,7 @@ export interface EntityBase {
 
 export interface HivelingDetails {
   type: EntityType.HIVELING;
-  hasNutrition: boolean;
+  hasFood: boolean;
 }
 export interface CurrentHivelingDetails extends HivelingDetails {
   memory64: string;
@@ -64,10 +54,18 @@ export type Entity = EntityBase &
   (
     | Hiveling
     | Trail
-    | { type: EntityType.NUTRITION }
+    | { type: EntityType.FOOD }
     | { type: EntityType.HIVE_ENTRANCE }
     | { type: EntityType.OBSTACLE }
   );
 
 export const isHiveling = (e: Entity): e is Hiveling =>
   e.type === EntityType.HIVELING;
+
+export interface Input {
+  maxMoveDistance: number;
+  interactableEntities: Entity[];
+  visibleEntities: Entity[];
+  currentHiveling: CurrentHiveling;
+  randomSeed: string;
+}

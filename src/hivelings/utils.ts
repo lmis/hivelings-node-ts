@@ -78,5 +78,6 @@ export const takeWhile = <T>(pred: (x: T) => boolean, xs: T[]): T[] => {
 
 export const range = (lower: number, upper: number) =>
   Array.from({ length: upper - lower }, (_, i) => i + lower);
+
 export const toDeg = (radians: number): number =>
   (radians >= 0 ? (radians / Math.PI) * 180 : 360 - toDeg(-radians)) % 360;
