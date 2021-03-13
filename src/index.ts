@@ -2,7 +2,7 @@ import express from "express";
 import WebSocket from "ws";
 import { hivelingMind } from "./hivelings/mind";
 
-const gameUrl = "https://qlu1v.csb.app/";
+const gameUrl = "https://6mc9i.csb.app/";
 // Hardcoded because I can't figure out the codesandbox magic
 const wssUrl = "wss://neces.sse.codesandbox.io/";
 const redirectUrl = gameUrl + "?hive-mind=" + encodeURIComponent(wssUrl);
