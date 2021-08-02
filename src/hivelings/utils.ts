@@ -38,7 +38,7 @@ export const makeLaggedFibo = (config: Config) => (
   const initialState = {
     sequence: [...seed.toString(), ...defaultSeed]
       .slice(0, k)
-      .map((c) => c.charCodeAt(0)),
+      .map(c => c.charCodeAt(0)),
     config
   };
 
@@ -56,20 +56,26 @@ export const makeStdLaggedFibo = makeLaggedFibo({
   defaultSeed: '!"j%BfBWsq&<c$_4)m78%qZw,y`x\\G79sJA;8"}|~zUETg|5v?^%0-/',
   m: Math.pow(2, 32)
 });
-export const int32 = (rng: Rng, lowerIncl: number, upperExcl: number) =>
+export const integer = (rng: Rng, lowerIncl: number, upperExcl: number) =>
   lowerIncl + (rng.getNext() % (upperExcl - lowerIncl));
 
 export const pickRandom = <T>(rng: Rng, xs: T[]): T | null =>
-  xs.length === 0 ? null : xs[int32(rng, 0, xs.length)];
+  xs.length === 0 ? null : xs[integer(rng, 0, xs.length)];
 
-export const sortBy = <T>(value: (x: T) => number, xs: T[]): T[] =>
-  xs
-    .map((x) => [x, value(x)] as [T, number])
-    .sort((a, b) => a[1] - b[1])
-    .map(([x]) => x);
+export const maxBy = <T>(value: (x: T) => number, xs: T[]): T | null =>
+  xs.reduce(
+    (acc: [T | null, number], x: T): [T | null, number] => {
+      const v = value(x);
+      if (acc === null || acc[1] < v) {
+        return [x, v];
+      }
+      return acc;
+    },
+    [null, -Infinity]
+  )?.[0] ?? null;
 
 export const takeWhile = <T>(pred: (x: T) => boolean, xs: T[]): T[] => {
-  const i = xs.findIndex((x) => !pred(x));
+  const i = xs.findIndex(x => !pred(x));
   if (i === -1) {
     return xs;
   }

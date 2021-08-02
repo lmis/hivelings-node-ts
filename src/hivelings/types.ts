@@ -19,27 +19,18 @@ export type Decision =
   | { type: DecisionType.TURN; degrees: number }
   | { type: DecisionType.DROP }
   | { type: DecisionType.MOVE; distance: number }
-  | { type: DecisionType.PICKUP }
+  | { type: DecisionType.PICKUP; index: number }
   | { type: DecisionType.WAIT };
 
-export interface Output {
-  decision: Decision;
-  memory64: string;
-}
-
 export interface Hiveling {
-  position: Position;
+  midpoint: Position;
   zIndex: number;
   type: EntityType.HIVELING;
-  hasFood: boolean;
-}
-
-export interface CurrentHiveling extends Hiveling {
-  memory64: string;
+  carriedType: EntityType | null;
 }
 
 export interface Trail {
-  position: Position;
+  midpoint: Position;
   zIndex: number;
   type: EntityType.TRAIL;
   lifetime: number;
@@ -47,32 +38,36 @@ export interface Trail {
 }
 
 export interface Food {
-  position: Position;
+  midpoint: Position;
   zIndex: number;
   type: EntityType.FOOD;
 }
 
 export interface Obstacle {
-  position: Position;
+  midpoint: Position;
   zIndex: number;
   type: EntityType.OBSTACLE;
 }
 
 export interface HiveEntrance {
-  position: Position;
+  midpoint: Position;
   zIndex: number;
   type: EntityType.HIVE_ENTRANCE;
 }
 
 export type Entity = Hiveling | Trail | Food | HiveEntrance | Obstacle;
 
-export const isHiveling = (e: Entity): e is Hiveling =>
-  e.type === EntityType.HIVELING;
-
-export interface Input {
+export interface Input<T> {
   maxMoveDistance: number;
   interactableEntities: Entity[];
   visibleEntities: Entity[];
-  currentHiveling: CurrentHiveling;
+  carriedType: EntityType | null;
+  memory: T | null;
   randomSeed: string;
+}
+
+export interface Output<T> {
+  decision: Decision;
+  memory: T;
+  show?: string;
 }

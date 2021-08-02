@@ -12,63 +12,32 @@ import {
   toDeg,
   makeStdLaggedFibo,
   Rng,
-  int32,
   pickRandom,
   range,
-  sortBy,
-  takeWhile
+  maxBy,
+  takeWhile,
+  integer
 } from "./utils";
-
-const { MOVE, TURN, PICKUP, DROP, WAIT } = DecisionType;
+const { MOVE, TURN, PICKUP, DROP } = DecisionType;
 const { HIVE_ENTRANCE, FOOD } = EntityType;
 
 interface Memory {
   recentDecisions: Decision[];
 }
-const serialize = ({ recentDecisions }: Memory): string => {
-  return recentDecisions
-    .map((d) => {
+
+const prettyPrint = ({ recentDecisions }: Memory): string =>
+  recentDecisions
+    .map(d => {
       switch (d.type) {
         case TURN:
           return "T" + d.degrees.toFixed(0);
         case MOVE:
-          return "M" + d.distance.toFixed(2);
+          return "M" + (d.distance === 1 ? "" : d.distance.toFixed(2));
         default:
           return d.type.toString().charAt(0);
       }
     })
-    .join(",");
-};
-
-const deserialize = (s: string): Memory => {
-  if (s === "") {
-    return { recentDecisions: [] };
-  }
-  const recentDecisions = s.split(",").map(
-    (d): Decision => {
-      switch (d.charAt(0)) {
-        case "T":
-          const degrees = parseFloat(d.substring(1, 4));
-          return {
-            type: TURN,
-            degrees
-          };
-        case "M":
-          const distance = parseFloat(d.substring(1, 5));
-          return { type: MOVE, distance };
-        case "P":
-          return { type: PICKUP };
-        case "D":
-          return { type: DROP };
-        case "W":
-          return { type: WAIT };
-        default:
-          throw new Error("Unable to parse decision: " + d);
-      }
-    }
-  );
-  return { recentDecisions };
-};
+    .join("-");
 
 const distance = ([x, y]: Position): number => Math.sqrt(x * x + y * y);
 
@@ -76,17 +45,14 @@ const distance = ([x, y]: Position): number => Math.sqrt(x * x + y * y);
 const positionToRotation = ([x, y]: Position): number =>
   Math.round(toDeg(Math.atan2(x, y)));
 
-const isInFront = (rotation: number): boolean => {
-  return rotation < 10 || rotation > 350;
-};
-
 // Estimate for number of turns to reach.
 const walkingCost = ([x, y]: Position) => {
   if (x === 0 && y === 0) {
     // Walk off and turn backwards
     return 2;
   }
-  const initialRotationCost = positionToRotation([x, y]) <= 0.01 ? 0 : 1;
+  const rotation = positionToRotation([x, y]);
+  const initialRotationCost = rotation < 15 || rotation > 355 ? 0 : 1;
   const movementCost = Math.round(distance([x, y]) + 0.5);
 
   return initialRotationCost + movementCost;
@@ -94,40 +60,12 @@ const walkingCost = ([x, y]: Position) => {
 
 const goTowards = (position: Position, maxMoveDistance: number): Decision => {
   const degrees = positionToRotation(position);
-  return degrees < 10 || degrees > 350
+  return degrees < 15 || degrees > 355
     ? {
         type: MOVE,
         distance: maxMoveDistance
       }
     : { type: TURN, degrees };
-};
-
-const doRandomWalk = (
-  rng: Rng,
-  maxMoveDistance: number,
-  recentDecisions: Decision[]
-): Decision => {
-  // Minimal distance to walk before turning
-  const minMoveDistance = 0.01;
-
-  // No target found. Random walk.
-  const moveStreak = takeWhile((d) => d.type === MOVE, recentDecisions).length;
-  if (maxMoveDistance > minMoveDistance && moveStreak <= 2) {
-    return { type: MOVE, distance: maxMoveDistance };
-  }
-  // Random rotation
-  const availableRotations =
-    maxMoveDistance > minMoveDistance
-      ? // Front bias
-        int32(rng, 0, 100) > 25
-        ? [...range(270, 360), ...range(0, 90)]
-        : range(0, 360)
-      : range(90, 270);
-  const degrees = pickRandom(rng, availableRotations);
-  if (degrees) {
-    return { type: TURN, degrees };
-  }
-  return { type: WAIT };
 };
 
 const search = (
@@ -140,13 +78,14 @@ const search = (
   // Find reachable target.
   const reachableTarget = pickRandom(
     rng,
-    visibleEntities.filter((e) => {
+    visibleEntities.filter(e => {
       if (e?.type !== soughtType) {
         return false;
       }
-      const dist = distance(e.position);
+      const dist = distance(e.midpoint);
+      const rotation = positionToRotation(e.midpoint);
       // Reachable by moving
-      if (dist < maxMoveDistance && positionToRotation(e.position)) {
+      if (dist < maxMoveDistance && (rotation < 75 || rotation > 295)) {
         return true;
       }
       // Reachable by turning.
@@ -157,52 +96,78 @@ const search = (
     })
   );
   if (reachableTarget) {
-    return goTowards(reachableTarget.position, maxMoveDistance);
+    return goTowards(reachableTarget.midpoint, maxMoveDistance);
   }
 
   // Find closest target.
   const blockedInFront = maxMoveDistance < 0.2;
-  const closestTarget = sortBy(
-    (e) => walkingCost(e.position),
-    visibleEntities.filter(
-      (e) =>
-        e.type === soughtType &&
-        !(blockedInFront && isInFront(positionToRotation(e.position)))
-    )
-  )[0];
+  const closestTarget = maxBy(
+    e => -walkingCost(e.midpoint),
+    visibleEntities.filter(e => {
+      if (e.type !== soughtType) {
+        return false;
+      }
+      if (!blockedInFront) {
+        return true;
+      }
+      const rotation = positionToRotation(e.midpoint);
+      return rotation < 270 && rotation > 90;
+    })
+  );
   if (closestTarget) {
-    return goTowards(closestTarget.position, maxMoveDistance);
+    return goTowards(closestTarget.midpoint, maxMoveDistance);
   }
 
   // No target found. Random walk.
-  return doRandomWalk(rng, maxMoveDistance, recentDecisions);
+  // Minimal distance to walk before turning
+  const minMoveDistance = 0.01;
+
+  // No target found. Random walk.
+  const moveStreak = takeWhile(d => d.type === MOVE, recentDecisions).length;
+  if (maxMoveDistance > minMoveDistance && moveStreak <= 2) {
+    return { type: MOVE, distance: maxMoveDistance };
+  }
+  // Random rotation
+  const availableRotations =
+    maxMoveDistance > minMoveDistance
+      ? // Front bias
+        integer(rng, 1, 100) > 25
+        ? [...range(270, 360), ...range(1, 90)]
+        : range(1, 360)
+      : range(90, 270);
+  return { type: TURN, degrees: pickRandom(rng, availableRotations) ?? 180 };
 };
 
-export const hivelingMind = (input: Input): Output => {
+export const hivelingMind = (input: Input<Memory>): Output<Memory> => {
   const {
     maxMoveDistance,
     visibleEntities,
     interactableEntities,
-    currentHiveling,
+    carriedType,
     randomSeed
   } = input;
-  const { memory64, hasFood } = currentHiveling;
   const rng = makeStdLaggedFibo(randomSeed);
 
-  const { recentDecisions } = deserialize(memory64);
-  const takeDecision = (decision: Decision): Output => ({
-    decision,
-    memory64: serialize({
+  const recentDecisions = input.memory?.recentDecisions ?? [];
+  const takeDecision = (decision: Decision): Output<Memory> => {
+    const memory = {
       recentDecisions: [decision, ...recentDecisions.slice(0, 5)]
-    })
-  });
+    };
+    return {
+      decision,
+      memory,
+      show: prettyPrint(memory)
+    };
+  };
 
   // Desired thing in front, interact.
-  if (hasFood && interactableEntities.some((e) => e.type === HIVE_ENTRANCE)) {
+  const hasFood = carriedType === FOOD;
+  if (hasFood && interactableEntities.some(e => e.type === HIVE_ENTRANCE)) {
     return takeDecision({ type: DROP });
   }
-  if (!hasFood && interactableEntities.some((e) => e.type === FOOD)) {
-    return takeDecision({ type: PICKUP });
+  const foodIndex = interactableEntities.findIndex(e => e.type === FOOD);
+  if (!hasFood && foodIndex !== -1) {
+    return takeDecision({ type: PICKUP, index: foodIndex });
   }
 
   // Go search
