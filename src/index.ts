@@ -3,16 +3,25 @@ import WebSocket from "ws";
 import { hivelingMind } from "./hivelings/mind";
 
 const gameUrl = "https://kykmw.csb.app/";
-// Hardcoded because I can't figure out the codesandbox magic
-const wssUrl = "wss://neces.sse.codesandbox.io/";
-const redirectUrl = gameUrl + "?hive-mind=" + encodeURIComponent(wssUrl);
+const redirectUrl = gameUrl + "?hive-mind=";
 const port = 8000;
 
 const server = express()
   .get("/", (_, res) => {
     // Codesandbox doesn't seem to like redirects, so I send a link instead
     res.send(
-      `<html><body><a href=${redirectUrl} target="_blank">Launch Game</a></body></html>`
+      `<html>
+        <head>
+          <script>
+          window.onload = function () {
+            document.getElementById("link").href = "${redirectUrl}" + encodeURIComponent("wss://" + location.hostname);
+          }
+          </script>
+        </head>
+        <body>
+          <a id="link" target="_blank">Launch Game</a>
+        </body>
+      </html>`
     );
   })
   .listen(port, () => console.log(`Listening on port ${port}`));
